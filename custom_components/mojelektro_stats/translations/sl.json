@@ -1,0 +1,50 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Moj Elektro statistika",
+        "description": "Žeton: mojelektro.si → Moj profil → Kreiraj žeton. Merilno mesto: številka EIMM (Merilna mesta). Za uvoz stroškov vpiši ceno energije dobavitelja; prazno pomeni samo porabo. Cene so brez DDV.",
+        "data": {
+          "token": "API žeton",
+          "usage_point": "Merilno mesto (EIMM)",
+          "energy_price": "Cena energije (EUR/kWh, brez DDV)",
+          "monthly_fee": "Mesečno nadomestilo dobavitelja po popustih (EUR, brez DDV)",
+          "vat": "Stopnja DDV",
+          "history_days": "Dnevi zgodovine ob prvem uvozu"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Žeton ali merilno mesto ni bilo sprejeto.",
+      "cannot_connect": "Povezava z Moj Elektro API ni uspela."
+    },
+    "abort": {
+      "already_configured": "To merilno mesto je že nastavljeno."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cene",
+        "data": {
+          "energy_price": "Cena energije (EUR/kWh, brez DDV)",
+          "monthly_fee": "Mesečno nadomestilo dobavitelja po popustih (EUR, brez DDV)",
+          "vat": "Stopnja DDV",
+          "history_days": "Dnevi zgodovine ob prvem uvozu"
+        }
+      }
+    }
+  },
+  "services": {
+    "import_history": {
+      "name": "Uvozi zgodovino",
+      "description": "Ponovno uvozi porabo (in strošek) od datuma do zadnjega popolnega dne.",
+      "fields": {
+        "from_date": {
+          "name": "Od datuma",
+          "description": "Začetni datum. Privzeto: zadnji teden (oz. nastavljena zgodovina, če še ni bilo uvoza)."
+        }
+      }
+    }
+  }
+}

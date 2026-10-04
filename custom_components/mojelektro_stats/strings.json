@@ -1,0 +1,50 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Moj Elektro Statistics",
+        "description": "Token: mojelektro.si → Moj profil → Kreiraj žeton. Usage point: the EIMM number of your metering point (Merilna mesta). Enter your supplier's energy price to also import costs; leave it empty for energy only. Prices are without VAT.",
+        "data": {
+          "token": "API token",
+          "usage_point": "Usage point (EIMM)",
+          "energy_price": "Energy price (EUR/kWh, without VAT)",
+          "monthly_fee": "Supplier monthly fee after discounts (EUR, without VAT)",
+          "vat": "VAT rate",
+          "history_days": "Days of history on first import"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Token or usage point was rejected.",
+      "cannot_connect": "Could not reach the Moj Elektro API."
+    },
+    "abort": {
+      "already_configured": "This usage point is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Prices",
+        "data": {
+          "energy_price": "Energy price (EUR/kWh, without VAT)",
+          "monthly_fee": "Supplier monthly fee after discounts (EUR, without VAT)",
+          "vat": "VAT rate",
+          "history_days": "Days of history on first import"
+        }
+      }
+    }
+  },
+  "services": {
+    "import_history": {
+      "name": "Import history",
+      "description": "Re-import consumption (and cost) from a date up to the last complete day.",
+      "fields": {
+        "from_date": {
+          "name": "From date",
+          "description": "Start date. Default: the last week (or the configured history if nothing was imported yet)."
+        }
+      }
+    }
+  }
+}
