@@ -16,7 +16,8 @@
     },
     "error": {
       "invalid_auth": "Token or usage point was rejected.",
-      "cannot_connect": "Could not reach the Moj Elektro API."
+      "cannot_connect": "Could not reach the Moj Elektro API.",
+      "check_credentials": "Moj Elektro answered with a server error (HTTP 500). This usually means the token or the EIMM is wrong - check both and try again."
     },
     "abort": {
       "already_configured": "This usage point is already configured."

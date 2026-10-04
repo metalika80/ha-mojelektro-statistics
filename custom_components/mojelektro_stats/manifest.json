@@ -1,13 +1,17 @@
 {
   "domain": "mojelektro_stats",
   "name": "Moj Elektro Statistics",
-  "codeowners": ["@metalika80"],
+  "codeowners": [
+    "@metalika80"
+  ],
   "config_flow": true,
-  "dependencies": ["recorder"],
+  "dependencies": [
+    "recorder"
+  ],
   "documentation": "https://github.com/metalika80/ha-mojelektro-statistics",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/metalika80/ha-mojelektro-statistics/issues",
   "requirements": [],
-  "version": "0.1.2"
+  "version": "0.1.3"
 }

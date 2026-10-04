@@ -16,7 +16,8 @@
     },
     "error": {
       "invalid_auth": "Žeton ali merilno mesto ni bilo sprejeto.",
-      "cannot_connect": "Povezava z Moj Elektro API ni uspela."
+      "cannot_connect": "Povezava z Moj Elektro API ni uspela.",
+      "check_credentials": "Moj Elektro je vrnil napako strežnika (HTTP 500). Običajno to pomeni napačen žeton ali EIMM - preverite oboje in poskusite znova."
     },
     "abort": {
       "already_configured": "To merilno mesto je že nastavljeno."

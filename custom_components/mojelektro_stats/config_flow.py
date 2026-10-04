@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
@@ -62,6 +63,10 @@ class MojElektroStatsConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_auth"
             except MojElektroError as err:
                 _LOGGER.warning("Moj Elektro API error during setup: %s", err)
+                # A wrong token (or EIMM) makes the API answer HTTP 500.
+                errors["base"] = "check_credentials" if err.status == 500 else "cannot_connect"
+            except (aiohttp.ClientError, TimeoutError) as err:
+                _LOGGER.warning("Could not reach Moj Elektro: %r", err)
                 errors["base"] = "cannot_connect"
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Unexpected error while checking Moj Elektro")

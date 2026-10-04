@@ -72,6 +72,17 @@ Settings → Devices & services → Add integration → **Moj Elektro Statistics
 Prices can be changed later under *Configure*; then run `mojelektro_stats.import_history`
 with a `from_date` to recompute past months.
 
+## Troubleshooting
+
+* **"Moj Elektro answered with a server error (HTTP 500)"** during setup: the API returns
+  HTTP 500 (not 401) for a wrong token, so check the token and EIMM first.
+* **Too many requests (HTTP 429):** the API allows only a few dozen quick requests; the
+  integration waits and retries automatically, so a large first import can take a few minutes.
+* **See what was imported:** each run logs `Moj Elektro import: {...}` at INFO level. Use
+  *Enable debug logging* on the integration, run `mojelektro_stats.import_history`, then disable it.
+* **Only use one grid source** in the Energy dashboard: if you previously imported the same
+  meter another way, remove that source, otherwise consumption is counted twice.
+
 ## Slovensko
 
 Integracija uvozi urno porabo iz Moj Elektro v dolgoročno statistiko Home Assistanta

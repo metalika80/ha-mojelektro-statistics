@@ -22,6 +22,10 @@ MAX_RETRIES = 6
 class MojElektroError(Exception):
     """Generic API error."""
 
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
 
 class MojElektroAuthError(MojElektroError):
     """Token or usage point rejected."""
@@ -50,9 +54,10 @@ class MojElektroApi:
                     await asyncio.sleep(wait)
                     continue
                 if r.status in (401, 403, 404):
-                    raise MojElektroAuthError(f"HTTP {r.status}")
+                    raise MojElektroAuthError(f"HTTP {r.status}", r.status)
                 if r.status != 200:
-                    raise MojElektroError(f"HTTP {r.status} for {url.split('?')[0]}")
+                    # Note: the API answers a wrong token with HTTP 500, not 401.
+                    raise MojElektroError(f"HTTP {r.status} for {url.split('?')[0]}", r.status)
                 return await r.json()
         raise MojElektroError("Still rate-limited after retries")
 
