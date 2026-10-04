@@ -39,12 +39,7 @@ class MojElektroApi:
 
     async def async_validate(self) -> None:
         """Check token and usage point (EIMM) with the metering point endpoint."""
-        url = f"{BASE}/merilno-mesto/{self._usage_point}"
-        async with self._session.get(url, headers=self._headers, timeout=aiohttp.ClientTimeout(total=30)) as r:
-            if r.status in (401, 403, 404):
-                raise MojElektroAuthError(f"HTTP {r.status}")
-            if r.status != 200:
-                raise MojElektroError(f"HTTP {r.status}")
+        await self._get_json(f"{BASE}/merilno-mesto/{self._usage_point}")
 
     async def _get_json(self, url: str) -> dict:
         for attempt in range(MAX_RETRIES):
@@ -54,7 +49,7 @@ class MojElektroApi:
                     _LOGGER.info("Moj Elektro rate limit, waiting %s s", wait)
                     await asyncio.sleep(wait)
                     continue
-                if r.status in (401, 403):
+                if r.status in (401, 403, 404):
                     raise MojElektroAuthError(f"HTTP {r.status}")
                 if r.status != 200:
                     raise MojElektroError(f"HTTP {r.status} for {url.split('?')[0]}")

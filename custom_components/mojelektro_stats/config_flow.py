@@ -1,6 +1,7 @@
 """Config flow for Moj Elektro Statistics."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -23,6 +24,8 @@ from .const import (
     DEFAULT_VAT,
     DOMAIN,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 PRICE = selector.NumberSelector(
     selector.NumberSelectorConfig(min=0, max=10, step="any", mode=selector.NumberSelectorMode.BOX)
@@ -54,9 +57,14 @@ class MojElektroStatsConfigFlow(ConfigFlow, domain=DOMAIN):
             api = MojElektroApi(async_get_clientsession(self.hass), user_input[CONF_TOKEN].strip(), usage_point)
             try:
                 await api.async_validate()
-            except MojElektroAuthError:
+            except MojElektroAuthError as err:
+                _LOGGER.warning("Moj Elektro rejected token or usage point: %s", err)
                 errors["base"] = "invalid_auth"
-            except (MojElektroError, Exception):  # noqa: BLE001
+            except MojElektroError as err:
+                _LOGGER.warning("Moj Elektro API error during setup: %s", err)
+                errors["base"] = "cannot_connect"
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Unexpected error while checking Moj Elektro")
                 errors["base"] = "cannot_connect"
             else:
                 data = {CONF_TOKEN: user_input[CONF_TOKEN].strip(), CONF_USAGE_POINT: usage_point}
