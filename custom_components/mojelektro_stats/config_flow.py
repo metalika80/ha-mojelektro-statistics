@@ -25,7 +25,7 @@ from .const import (
 )
 
 PRICE = selector.NumberSelector(
-    selector.NumberSelectorConfig(min=0, max=10, step=0.000001, mode=selector.NumberSelectorMode.BOX)
+    selector.NumberSelectorConfig(min=0, max=10, step="any", mode=selector.NumberSelectorMode.BOX)
 )
 
 
