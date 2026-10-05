@@ -4,15 +4,13 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import aiohttp
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.helpers import selector
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import MojElektroApi, MojElektroAuthError, MojElektroError
+from .api import MojElektroApi, MojElektroAuthError, MojElektroError, create_session
 from .const import (
     CONF_ENERGY_PRICE,
     CONF_HISTORY_DAYS,
@@ -55,7 +53,8 @@ class MojElektroStatsConfigFlow(ConfigFlow, domain=DOMAIN):
             usage_point = user_input[CONF_USAGE_POINT].strip()
             await self.async_set_unique_id(usage_point)
             self._abort_if_unique_id_configured()
-            api = MojElektroApi(async_get_clientsession(self.hass), user_input[CONF_TOKEN].strip(), usage_point)
+            session = create_session()
+            api = MojElektroApi(session, user_input[CONF_TOKEN].strip(), usage_point)
             try:
                 await api.async_validate()
             except MojElektroAuthError as err:
@@ -65,12 +64,11 @@ class MojElektroStatsConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.warning("Moj Elektro API error during setup: %s", err)
                 # A wrong token (or EIMM) makes the API answer HTTP 500.
                 errors["base"] = "check_credentials" if err.status == 500 else "cannot_connect"
-            except (aiohttp.ClientError, TimeoutError) as err:
-                _LOGGER.warning("Could not reach Moj Elektro: %r", err)
-                errors["base"] = "cannot_connect"
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Unexpected error while checking Moj Elektro")
                 errors["base"] = "cannot_connect"
+            finally:
+                await session.close()
             else:
                 data = {CONF_TOKEN: user_input[CONF_TOKEN].strip(), CONF_USAGE_POINT: usage_point}
                 options = {k: v for k, v in user_input.items() if k not in data}

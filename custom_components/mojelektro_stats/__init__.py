@@ -10,11 +10,11 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import CoreState, HomeAssistant, ServiceCall, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_change
 
-from .api import MojElektroApi, MojElektroError
+from .api import MojElektroApi, MojElektroError, create_session
 from .const import (
     ATTR_FROM_DATE,
     CONF_ENERGY_PRICE,
@@ -56,7 +56,10 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     async def handle_import(call: ServiceCall) -> None:
         start: date | None = call.data.get(ATTR_FROM_DATE)
         for importer in hass.data.get(DOMAIN, {}).values():
-            await importer.async_run(start)
+            try:
+                await importer.async_run(start)
+            except MojElektroError as err:
+                raise HomeAssistantError(f"Moj Elektro import failed: {err}") from err
 
     hass.services.async_register(DOMAIN, SERVICE_IMPORT_HISTORY, handle_import, schema=SERVICE_SCHEMA)
     return True
@@ -64,7 +67,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     conf = {**entry.data, **entry.options}
-    api = MojElektroApi(async_get_clientsession(hass), conf[CONF_TOKEN], conf[CONF_USAGE_POINT])
+    session = create_session()
+    entry.async_on_unload(session.close)
+    api = MojElektroApi(session, conf[CONF_TOKEN], conf[CONF_USAGE_POINT])
     importer = StatisticsImporter(
         hass, api, conf[CONF_USAGE_POINT], _prices(conf),
         int(conf.get(CONF_HISTORY_DAYS, DEFAULT_HISTORY_DAYS)),
@@ -75,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             await importer.async_run()
         except MojElektroError as err:
-            _LOGGER.warning("Moj Elektro import failed: %s", err)
+            _LOGGER.warning("Moj Elektro import failed, will retry at the next run: %s", err)
         except Exception:  # noqa: BLE001 - keep the schedule alive
             _LOGGER.exception("Moj Elektro import failed")
 

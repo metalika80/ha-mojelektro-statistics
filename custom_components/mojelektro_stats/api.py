@@ -17,6 +17,21 @@ READING_15MIN = "32.0.2.4.1.2.12.0.0.0.0.0.0.0.0.3.72.0"
 CHUNK_DAYS = 30
 PAUSE_SECONDS = 3
 MAX_RETRIES = 6
+CONNECT_RETRIES = 3
+CONNECT_PAUSE = 20
+
+
+def create_session() -> aiohttp.ClientSession:
+    """Own session that resolves names with the system resolver (getaddrinfo).
+
+    Home Assistant's shared session uses aiodns, which on some routers
+    (resolv.conf with 127.0.0.1 and ::1) gets stuck with "Timeout while
+    contacting DNS servers" until HA is restarted, while normal lookups work.
+    """
+    return aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver()),
+        timeout=aiohttp.ClientTimeout(total=60),
+    )
 
 
 class MojElektroError(Exception):
@@ -46,8 +61,18 @@ class MojElektroApi:
         await self._get_json(f"{BASE}/merilno-mesto/{self._usage_point}")
 
     async def _get_json(self, url: str) -> dict:
+        connect_failures = 0
         for attempt in range(MAX_RETRIES):
-            async with self._session.get(url, headers=self._headers, timeout=aiohttp.ClientTimeout(total=60)) as r:
+            try:
+                r = await self._session.get(url, headers=self._headers)
+            except (aiohttp.ClientError, TimeoutError) as err:
+                connect_failures += 1
+                if connect_failures >= CONNECT_RETRIES:
+                    raise MojElektroError(f"cannot reach Moj Elektro ({type(err).__name__}: {err})") from err
+                _LOGGER.debug("Moj Elektro not reachable (%s), retrying in %s s", err, CONNECT_PAUSE)
+                await asyncio.sleep(CONNECT_PAUSE)
+                continue
+            async with r:
                 if r.status == 429:
                     wait = 30 * (attempt + 1)
                     _LOGGER.info("Moj Elektro rate limit, waiting %s s", wait)
@@ -58,8 +83,11 @@ class MojElektroApi:
                 if r.status != 200:
                     # Note: the API answers a wrong token with HTTP 500, not 401.
                     raise MojElektroError(f"HTTP {r.status} for {url.split('?')[0]}", r.status)
-                return await r.json()
-        raise MojElektroError("Still rate-limited after retries")
+                try:
+                    return await r.json()
+                except (aiohttp.ClientError, TimeoutError, ValueError) as err:
+                    raise MojElektroError(f"bad response from Moj Elektro: {err}") from err
+        raise MojElektroError("Moj Elektro still unavailable after retries")
 
     async def async_fetch_intervals(self, start: date, end: date) -> dict[datetime, float]:
         """{interval start (UTC): kWh} for local dates start <= d < end, deduplicated."""
