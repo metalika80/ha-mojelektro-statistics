@@ -67,12 +67,12 @@ class MojElektroStatsConfigFlow(ConfigFlow, domain=DOMAIN):
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Unexpected error while checking Moj Elektro")
                 errors["base"] = "cannot_connect"
-            finally:
-                await session.close()
             else:
                 data = {CONF_TOKEN: user_input[CONF_TOKEN].strip(), CONF_USAGE_POINT: usage_point}
                 options = {k: v for k, v in user_input.items() if k not in data}
                 return self.async_create_entry(title=f"Moj Elektro {usage_point}", data=data, options=options)
+            finally:
+                await session.close()
         schema = vol.Schema(
             {
                 vol.Required(CONF_TOKEN): selector.TextSelector(
