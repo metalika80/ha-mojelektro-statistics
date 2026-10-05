@@ -76,6 +76,10 @@ with a `from_date` to recompute past months.
 
 * **"Moj Elektro answered with a server error (HTTP 500)"** during setup: the API returns
   HTTP 500 (not 401) for a wrong token, so check the token and EIMM first.
+* **DNS timeouts:** the integration resolves api.informatika.si with the system resolver
+  in its own connection pool, so a stuck Home Assistant DNS resolver ("Timeout while
+  contacting DNS servers") doesn't block the import. Connection errors are retried and
+  logged as one warning; the next scheduled run fills any gap (it re-reads the last week).
 * **Too many requests (HTTP 429):** the API allows only a few dozen quick requests; the
   integration waits and retries automatically, so a large first import can take a few minutes.
 * **See what was imported:** each run logs `Moj Elektro import: {...}` at INFO level. Use
